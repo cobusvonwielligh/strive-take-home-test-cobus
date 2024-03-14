@@ -1,11 +1,19 @@
-import Airtable from "airtable";
-import { NextApiRequest, NextApiResponse } from "next";
+import Airtable from 'airtable';
+import { NextApiRequest, NextApiResponse } from 'next';
 
-const airtable = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY });
+const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID || 'ppofHk5rJkpaimm1');
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { recordId } = req.query as { recordId: string };
-  // your code here
-  // see api reference: https://airtable.com/appofHk5rJkpaimm1/api/docs#javascript
-  return res.status(200).send({ data: {} }); // populate this with your data
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { recordId } = req.query;
+
+  if (typeof recordId !== 'string') {
+    return res.status(400).json({ error: 'Record ID must be provided as a string.' });
+  }
+
+  try {
+    const record = await base('Lessons').find(recordId);
+    res.status(200).json({ data: record.fields });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch data from Airtable.' });
+  }
 }
